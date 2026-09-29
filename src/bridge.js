@@ -3,7 +3,10 @@
 let connection;
 const pending = new Map();
 const CHANNEL = 'solymar-patrol-v1';
-const endpoint = import.meta.env.VITE_APPS_SCRIPT_URL;
+// This public URL ships with each portal so a fresh static deployment works.
+// A nonblank environment variable can override it for another deployment.
+const endpoint = (import.meta.env.VITE_APPS_SCRIPT_URL || '').trim()
+  || 'https://script.google.com/macros/s/AKfycbyzFVl9JMNSTXmfxPIf_BilEvbOwO8qVqEyMDbAufmbnfxpWmNy2LLtcTK8_N0bsAbd/exec';
 
 export function bridgeConfigured() { return Boolean(endpoint); }
 

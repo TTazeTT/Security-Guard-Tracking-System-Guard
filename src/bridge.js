@@ -6,7 +6,7 @@ const CHANNEL = 'solymar-patrol-v1';
 // This public URL ships with each portal so a fresh static deployment works.
 // A nonblank environment variable can override it for another deployment.
 const endpoint = (import.meta.env.VITE_APPS_SCRIPT_URL || '').trim()
-  || 'https://script.google.com/macros/s/AKfycbyzFVl9JMNSTXmfxPIf_BilEvbOwO8qVqEyMDbAufmbnfxpWmNy2LLtcTK8_N0bsAbd/exec';
+  || 'https://script.google.com/macros/s/AKfycbw7bqiqA2RFIfzu0EKBlZdaY-QXLh0f9qAAme0WR0k1ndPBHbKXPIFKW-GB6Heg-34/exec';
 
 export function bridgeConfigured() { return Boolean(endpoint); }
 

@@ -1,3 +1,4 @@
+import {withLoading, requestLabel} from './feedback';
 import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, collection, doc, getDoc, getDocs, onSnapshot, query, where, orderBy, limit, startAfter, connectFirestoreEmulator } from 'firebase/firestore';
@@ -90,7 +91,7 @@ function rememberShift(shift) {
   return shift;
 }
 
-export async function restoreSession() {
+async function restoreSessionOperation() {
   if (!isFirebase) return Boolean(sessionStorage.getItem('patrol-token'));
   await ready;
   return Boolean(auth.currentUser);
@@ -98,25 +99,25 @@ export async function restoreSession() {
 
 export function driveStatus() { return { ...drive, configured: bridgeConfigured() }; }
 export function hasMoreHistory() { return isFirebase && historyFull; }
-export async function loadMoreHistory() {
+async function loadMoreHistoryOperation() {
   if (!historyCursor || !historyFull) return;
   const result = await getDocs(query(collection(db, 'shifts'), ...userConstraints(), orderBy('startedAt', 'desc'), startAfter(historyCursor), limit(historySize)));
   older.push(...values(result)); historyCursor = result.docs.at(-1); historyFull = result.size === historySize;
 }
 
-export async function connectDrive(popup) {
+async function connectDriveOperation(popup) {
   try {
     const {url} = await rpc('drive/connect', {origin: location.origin});
     if (!popup || popup.closed) throw new Error('Allow popups, then select Connect Google Drive again.');
     popup.location.replace(url);
   } catch (error) { popup?.close(); throw error; }
 }
-export async function checkDrive() {
+async function checkDriveOperation() {
   const status = await rpc('drive/status');
   drive = {...drive, ...status}; return status;
 }
 
-export async function request(path, options = {}) {
+async function requestOperation(path, options = {}) {
   if (!isFirebase) {
     const response = await fetch(legacyApi + path, {...options, headers: {'Content-Type':'application/json', Authorization:`Bearer ${sessionStorage.getItem('patrol-token') || ''}`, ...options.headers}});
     const data = await response.json().catch(() => ({error:'The server returned an invalid response.'}));
@@ -174,4 +175,24 @@ export async function request(path, options = {}) {
   if (path === '/guards') return rpc('guards/create', body);
   if (path === '/shifts') return routeFor(rememberShift(await rpc('shifts/start', body)));
   throw new Error('Unknown patrol request.');
+}
+
+export function restoreSession(...args) {
+  return withLoading('Loading your session…', () => restoreSessionOperation(...args));
+}
+
+export function loadMoreHistory(...args) {
+  return withLoading('Loading earlier shifts…', () => loadMoreHistoryOperation(...args));
+}
+
+export function connectDrive(...args) {
+  return withLoading('Connecting Google Drive…', () => connectDriveOperation(...args));
+}
+
+export function checkDrive(...args) {
+  return withLoading('Checking Google Drive…', () => checkDriveOperation(...args));
+}
+
+export function request(path, options = {}) {
+  return withLoading(requestLabel(path, options), () => requestOperation(path, options));
 }
